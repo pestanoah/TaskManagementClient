@@ -2,6 +2,7 @@ import boto3
 from escpos.printer import Usb
 from dotenv import load_dotenv
 import printing
+from time import sleep
 
 SQS_QUEUE_URL = "https://sqs.us-east-2.amazonaws.com/674010401876/TaskPrintingQueue"
 
@@ -81,13 +82,15 @@ def main():
                        region_name='us-east-2'
                        )
     # poll for sqs messages
-    try:
-        p = Usb(0x0fe6, 0x811e, 0, profile="TM-T88III")
-        pollForMessages(processMessage, sqs, p)
-    except Exception as e:
-        print("Error connecting to printer, just logging messages:", e)
-        pollForMessages(processMessageLocal, sqs, None)
-        return
+    p = None
+    while True:
+        try:
+            p = Usb(0x0fe6, 0x811e, 0, profile="TM-T88III")
+            break
+        except Exception as e:
+            sleep(60)
+
+    pollForMessages(processMessage, sqs, p)
 
 
 if __name__ == "__main__":
